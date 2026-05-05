@@ -54,6 +54,14 @@ class Game:
         self.dead = False
         self.move_count = 0
 
+    def copy(self):
+        game = Game()
+        game.board = self.board.copy()
+        game.hand = self.hand.copy()
+        game.dead = self.dead
+        game.move_count = self.move_count
+        return game
+
     def randomize_board(self):
         self.board = {index: random.choice([True, False]) for index in indices()}
 

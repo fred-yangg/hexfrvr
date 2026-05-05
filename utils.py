@@ -15,8 +15,6 @@ def build_piece_checks(piece_types):
 
     for piece in piece_types:
         for position in indices():
-            if piece == ((0,0), (1,0), (2,0), (3,0)) and position == (0,1):
-                print('debug')
             checks = []
             hexes = list(piece_hexes(piece, position))
             rows = set(map(lambda x: x[0], hexes))
