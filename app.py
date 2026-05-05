@@ -36,6 +36,7 @@ class HexGridTk(tk.Tk):
         self.geometry(f'{width}x{height}')
         self.coordinates_on = coordinates_on
         self.strategy = strategy
+        self.continuous_play = False
 
         self.grid_hexes: dict[tuple[int, int], int] = {index: 0 for index in indices()}
         self.hand_hexes: list[list[int]] = [[0 for _ in range(4)] for _ in range(self.game.hand_size)]
@@ -53,17 +54,19 @@ class HexGridTk(tk.Tk):
         self.create_hexes()
 
         # Button to demonstrate fast color updates
-        btn = tk.Button(self, text="Reset", command=self.game.reset)
-        btn.place(x=20, y=20)
+        buttons = [
+            tk.Button(self, text="Reset", command=self.game.reset),
+            tk.Button(self, text=f'Play Strategy "{self.strategy.name}"', command=lambda: self.game.play_strategy(self.strategy)),
+            tk.Button(self, text=f'Play Continuously', command=self.start_continuous_play),
+        ]
 
-        btn = tk.Button(self, text="Play Random", command=self.game.play_random)
-        btn.place(x=20, y=60)
-
-        btn = tk.Button(self, text=f'Play Strategy: "{self.strategy.name}"', command=lambda: self.game.play_strategy(self.strategy))
-        btn.place(x=20, y=100)
+        for i, button in enumerate(buttons):
+            button.place(x=20, y=20 + 40*i)
 
         self.dead_text = self.canvas.create_text(self.dim.center_x, self.dim.major_radius, text="", fill=self.error_colour, font=("Arial", 20, "bold"))
 
+    def start_continuous_play(self):
+        self.continuous_play = True
 
     def set_hex(self, index, filled: bool):
         hex_id = self.grid_hexes[index]
@@ -139,5 +142,10 @@ class HexGridTk(tk.Tk):
             self.canvas.itemconfig(self.dead_text, text=f"No possible moves after {self.game.move_count} moves!")
         else:
             self.canvas.itemconfig(self.dead_text, text=f"")
+
+        if self.continuous_play:
+            self.game.play_strategy(self.strategy)
+            if self.game.dead:
+                self.continuous_play = False
 
         super().update()

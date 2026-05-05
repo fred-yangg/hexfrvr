@@ -62,21 +62,21 @@ class Game:
         game.move_count = self.move_count
         return game
 
-    def randomize_board(self):
-        self.board = {index: random.choice([True, False]) for index in indices()}
-
-    def randomize_hand(self):
-        self.hand = random.choices(piece_bag, k=self.hand_size)
-
-    def play_random(self):
-        all_moves = self.all_playable_moves()
-
-        if not all_moves:
-            self.dead = True
-            return
-
-        move = random.choice(all_moves)
-        self.play_hand(*move)
+    # def randomize_board(self):
+    #     self.board = {index: random.choice([True, False]) for index in indices()}
+    #
+    # def randomize_hand(self):
+    #     self.hand = random.choices(piece_bag, k=self.hand_size)
+    #
+    # def play_random(self):
+    #     all_moves = self.all_playable_moves()
+    #
+    #     if not all_moves:
+    #         self.dead = True
+    #         return
+    #
+    #     move = random.choice(all_moves)
+    #     self.play_hand(*move)
 
     def play_strategy(self, strategy):
         all_moves = self.all_playable_moves()
