@@ -1,5 +1,4 @@
 import math
-import random
 import tkinter as tk
 
 from utils import indices
@@ -23,17 +22,18 @@ class Dimensions:
     # hex index to cartesian
     def h2c(self, index: tuple[float, float]):
         row, col = index
-        x = (2 * row - col) * self.minor_radius
-        y = 1.5 * col * self.major_radius
+        x = (2 * col - row) * self.minor_radius
+        y = 1.5 * row * self.major_radius
         return x, y
 
 
 class HexGridTk(tk.Tk):
-    def __init__(self, game, width=800, height=800, rows=9):
+    def __init__(self, game, width=800, height=800, rows=9, coordinates_on=False):
         super().__init__()
         self.game = game
         self.title("Hex Grid")
         self.geometry(f'{width}x{height}')
+        self.coordinates_on = coordinates_on
 
         self.grid_hexes: dict[tuple[int, int], int] = {index: 0 for index in indices()}
         self.hand_hexes: list[list[int]] = [[0 for _ in range(4)] for _ in range(self.game.hand_size)]
@@ -42,6 +42,7 @@ class HexGridTk(tk.Tk):
         self.empty_colour = '#333333'
         self.full_colour = '#ffffff'
         self.text_colour = '#7e7e9e'
+        self.error_colour = '#ff0000'
 
         self.dim = Dimensions(width, height, rows)
         self.canvas = tk.Canvas(self, width=width, height=height, bg=self.bg_colour, highlightthickness=0)
@@ -55,6 +56,12 @@ class HexGridTk(tk.Tk):
 
         btn = tk.Button(self, text="Randomize Hand", command=self.game.randomize_hand)
         btn.place(x=20, y=60)
+
+        btn = tk.Button(self, text="Random Play", command=self.game.random_play)
+        btn.place(x=20, y=100)
+
+        self.dead_text = self.canvas.create_text(self.dim.center_x, self.dim.major_radius, text="", fill=self.error_colour, font=("Arial", 20, "bold"))
+
 
     def set_hex(self, index, filled: bool):
         hex_id = self.grid_hexes[index]
@@ -106,7 +113,8 @@ class HexGridTk(tk.Tk):
             points = self.hex_points(cx, cy)
             hex_id = self.canvas.create_polygon(points, outline=self.bg_colour, fill=self.empty_colour, width=3)
             self.grid_hexes[index] = hex_id
-            self.canvas.create_text(cx, cy, text=f"{row},{col}", fill=self.text_colour, font=("Arial", 9, "bold"))
+            if self.coordinates_on:
+                self.canvas.create_text(cx, cy, text=f"{row},{col}", fill=self.text_colour, font=("Arial", 9, "bold"))
 
         # Pieces
         for piece_num, piece in enumerate(self.game.hand):
@@ -124,5 +132,8 @@ class HexGridTk(tk.Tk):
             hex_points = self.piece_hex_points(piece_num, piece)
             for hex_num, points in zip(piece_hexes, hex_points):
                 self.canvas.coords(hex_num, *[coord for point in points for coord in point])
+
+        if self.game.dead:
+            self.canvas.itemconfig(self.dead_text, text=f"No possible moves after {self.game.move_count} moves!")
 
         super().update()
