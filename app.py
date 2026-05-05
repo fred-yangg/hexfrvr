@@ -1,6 +1,7 @@
 import math
 import tkinter as tk
 
+import strategies
 from utils import indices
 
 class Dimensions:
@@ -28,12 +29,13 @@ class Dimensions:
 
 
 class HexGridTk(tk.Tk):
-    def __init__(self, game, width=800, height=800, rows=9, coordinates_on=False):
+    def __init__(self, game, width=800, height=800, rows=9, coordinates_on=False, strategy=strategies.Random()):
         super().__init__()
         self.game = game
         self.title("Hex Grid")
         self.geometry(f'{width}x{height}')
         self.coordinates_on = coordinates_on
+        self.strategy = strategy
 
         self.grid_hexes: dict[tuple[int, int], int] = {index: 0 for index in indices()}
         self.hand_hexes: list[list[int]] = [[0 for _ in range(4)] for _ in range(self.game.hand_size)]
@@ -51,13 +53,13 @@ class HexGridTk(tk.Tk):
         self.create_hexes()
 
         # Button to demonstrate fast color updates
-        btn = tk.Button(self, text="Randomize Board", command=self.game.randomize_board)
+        btn = tk.Button(self, text="Reset", command=self.game.reset)
         btn.place(x=20, y=20)
 
-        btn = tk.Button(self, text="Randomize Hand", command=self.game.randomize_hand)
+        btn = tk.Button(self, text="Play Random", command=self.game.play_random)
         btn.place(x=20, y=60)
 
-        btn = tk.Button(self, text="Random Play", command=self.game.random_play)
+        btn = tk.Button(self, text=f'Play Strategy: "{self.strategy.name}"', command=lambda: self.game.play_strategy(self.strategy))
         btn.place(x=20, y=100)
 
         self.dead_text = self.canvas.create_text(self.dim.center_x, self.dim.major_radius, text="", fill=self.error_colour, font=("Arial", 20, "bold"))
@@ -135,5 +137,7 @@ class HexGridTk(tk.Tk):
 
         if self.game.dead:
             self.canvas.itemconfig(self.dead_text, text=f"No possible moves after {self.game.move_count} moves!")
+        else:
+            self.canvas.itemconfig(self.dead_text, text=f"")
 
         super().update()

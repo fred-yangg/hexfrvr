@@ -42,8 +42,14 @@ piece_checks = build_piece_checks(piece_types)
 
 class Game:
     def __init__(self):
-        self.board = {index: False for index in indices()}
         self.hand_size = 3
+        self.board = {index: False for index in indices()}
+        self.hand = random.choices(piece_bag, k=self.hand_size)
+        self.dead = False
+        self.move_count = 0
+
+    def reset(self):
+        self.board = {index: False for index in indices()}
         self.hand = random.choices(piece_bag, k=self.hand_size)
         self.dead = False
         self.move_count = 0
@@ -54,13 +60,37 @@ class Game:
     def randomize_hand(self):
         self.hand = random.choices(piece_bag, k=self.hand_size)
 
-    def random_play(self):
-        try:
-            move = random.choice(self.all_playable_moves())
-            self.play_hand(*move)
-        except IndexError:
-            print("No possible moves!")
+    def play_random(self):
+        all_moves = self.all_playable_moves()
+
+        if not all_moves:
             self.dead = True
+            return
+
+        move = random.choice(all_moves)
+        self.play_hand(*move)
+
+    def play_strategy(self, strategy):
+        all_moves = self.all_playable_moves()
+
+        if not all_moves:
+            self.dead = True
+            return
+
+        if len(all_moves) == 1:
+            self.play_hand(*all_moves[0])
+            return
+
+        move = strategy.get_move(self, all_moves)
+        self.play_hand(*move)
+
+    def clear(self, hexes):
+        for hexagon in hexes:
+            self.board[hexagon] = False
+
+    def fill(self, hexes):
+        for hexagon in hexes:
+            self.board[hexagon] = True
 
     def check_piece(self, piece, position):
         for hexagon in piece_hexes(piece, position):
@@ -78,14 +108,27 @@ class Game:
         ]
 
     def place_piece(self, piece, position):
-        for hexagon in piece_hexes(piece, position):
-            self.board[hexagon] = True
+        self.fill(piece_hexes(piece, position))
 
     def play_hand(self, piece_num, position):
         piece = self.hand[piece_num]
         self.place_piece(piece, position)
         self.hand[piece_num] = random.choice(piece_bag)
-        self.check_line_clears()
+        self.perform_line_clears(piece, position)
         self.move_count += 1
 
+    def perform_line_clears(self, piece, position):
+        checks = piece_checks[(piece, position)]
+        to_clear = set()
 
+        for line in checks:
+            full = True
+            for hexagon in line:
+                if not self.board[hexagon]:
+                    full = False
+                    break
+
+            if full:
+                to_clear |= line
+
+        self.clear(to_clear)
