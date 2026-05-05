@@ -6,17 +6,22 @@ from utils import indices
 
 class Dimensions:
     def __init__(self, width, height, rows):
-        self.width = width
-        self.height = height
-        self.rows = rows
-        self.min_dim = min(self.width, self.height)
-        self.major_radius = self.min_dim / (self.rows + 4) / 2
-        self.minor_radius = self.major_radius * math.cos(math.radians(30))
-        self.center_x = self.width / 2
-        self.center_y = self.height / 2
+        self.width: int = width
+        self.height: int = height
+        self.rows: int = rows
+        self.min_dim: int = min(self.width, self.height)
+        self.major_radius: float = self.min_dim / (self.rows + 4) / 2
+        self.minor_radius: float = self.major_radius * math.cos(math.radians(30))
+        self.center_x: float = self.width / 2
+        self.center_y: float = self.height / 2 - 4 * self.major_radius
+        self.piece_centers: list[tuple[float, float]] = [
+            (self.center_x / 3, self.center_y + 12 * self.major_radius),
+            (self.center_x, self.center_y + 12 * self.major_radius),
+            (self.center_x * 5 / 3, self.center_y + 12 * self.major_radius),
+        ]
 
     # hex index to cartesian
-    def h2c(self, index):
+    def h2c(self, index: tuple[float, float]):
         row, col = index
         x = (2 * row - col) * self.minor_radius
         y = 1.5 * col * self.major_radius
@@ -30,8 +35,8 @@ class HexGridTk(tk.Tk):
         self.title("Hex Grid")
         self.geometry(f'{width}x{height}')
 
-        self.canvas_grid: dict[tuple[int, int], int] = {index: 0 for index in indices()}
-        self.hand = []
+        self.grid_hexes: dict[tuple[int, int], int] = {index: 0 for index in indices()}
+        self.hand_hexes: list[list[int]] = [[0 for _ in range(4)] for _ in range(self.game.hand_size)]
 
         self.bg_colour = '#4e4e6e'
         self.empty_colour = '#333333'
@@ -42,43 +47,82 @@ class HexGridTk(tk.Tk):
         self.canvas = tk.Canvas(self, width=width, height=height, bg=self.bg_colour, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
 
-        self.create_hex_grid()
+        self.create_hexes()
 
         # Button to demonstrate fast color updates
-        btn = tk.Button(self, text="Randomize All Colors", command=self.randomize_colors)
+        btn = tk.Button(self, text="Randomize Board", command=self.game.randomize_board)
         btn.place(x=20, y=20)
 
-    def randomize_colors(self):
-        for hexagon in self.canvas_grid.values():
-            self.canvas.itemconfig(hexagon, fill=random.choice([self.empty_colour, self.full_colour]))
+        btn = tk.Button(self, text="Randomize Hand", command=self.game.randomize_hand)
+        btn.place(x=20, y=60)
 
     def set_hex(self, index, filled: bool):
-        hex_id = self.canvas_grid[index]
+        hex_id = self.grid_hexes[index]
         color = self.full_colour if filled else self.empty_colour
         self.canvas.itemconfig(hex_id, fill=color)
 
-    def create_hex_grid(self):
-        for row in range(9):
-            row_size = 9 - abs(4 - row)
-            start = 0 if row < 5 else row - 4
-            cy = self.dim.center_y - (4 - row) * 1.5 * self.dim.major_radius
+    def hex_points(self, cx, cy) -> list[tuple[int, int]]:
+        return [(
+            cx + self.dim.major_radius * math.cos(math.radians(60 * i + 30)),
+            cy + self.dim.major_radius * math.sin(math.radians(60 * i + 30))
+        ) for i in range(6)]
 
-            for col in range(start, start + row_size):
-                cx = self.dim.center_x - row_size * self.dim.minor_radius + (col - start) * self.dim.minor_radius * 2
+    def piece_hex_points(self, piece_num, piece) -> list[list[tuple[float, float]]]:
+        center_x, center_y = self.dim.piece_centers[piece_num]
 
-                points = []
-                for i in range(6):
-                    angle = math.radians(60 * i + 30)
-                    px = cx + self.dim.major_radius * math.cos(angle)
-                    py = cy + self.dim.major_radius * math.sin(angle)
-                    points.extend([px, py])
+        avg_x, avg_y = 0, 0
+        for index in piece:
+            x, y = self.dim.h2c(index)
+            avg_x += x
+            avg_y += y
+        avg_x /= len(piece)
+        avg_y /= len(piece)
 
-                hex_id = self.canvas.create_polygon(points, outline=self.bg_colour, fill=self.empty_colour, width=3)
-                self.canvas_grid[(row, col)] = hex_id
-                self.canvas.create_text(cx, cy, text=f"{row},{col}", fill=self.text_colour, font=("Arial", 9, "bold"))
+        offset_x = center_x - avg_x
+        offset_y = center_y - avg_y
+
+        hex_points = []
+        for hex_index in piece:
+            cx, cy = self.dim.h2c(hex_index)
+            cx += offset_x
+            cy += offset_y
+            hex_points.append(self.hex_points(cx, cy))
+
+        return hex_points
+
+    def create_hexes(self):
+        # Hex Grid
+        mid = (self.dim.rows - 1) / 2
+        offset_x, offset_y = self.dim.h2c((mid, mid))
+        offset_x = self.dim.center_x - offset_x
+        offset_y = self.dim.center_y - offset_y
+        for index in indices():
+            row, col = index
+
+            cx, cy = self.dim.h2c(index)
+            cx += offset_x
+            cy += offset_y
+
+            points = self.hex_points(cx, cy)
+            hex_id = self.canvas.create_polygon(points, outline=self.bg_colour, fill=self.empty_colour, width=3)
+            self.grid_hexes[index] = hex_id
+            self.canvas.create_text(cx, cy, text=f"{row},{col}", fill=self.text_colour, font=("Arial", 9, "bold"))
+
+        # Pieces
+        for piece_num, piece in enumerate(self.game.hand):
+            hex_points = self.piece_hex_points(piece_num, piece)
+            for hex_num, points in enumerate(hex_points):
+                hex_id = self.canvas.create_polygon(points, outline=self.bg_colour, fill=self.full_colour, width=3)
+                self.hand_hexes[piece_num][hex_num] = hex_id
+
 
     def update(self):
         for index, filled in self.game.board.items():
             self.set_hex(index, filled)
+
+        for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
+            hex_points = self.piece_hex_points(piece_num, piece)
+            for hex_num, points in zip(piece_hexes, hex_points):
+                self.canvas.coords(hex_num, *[coord for point in points for coord in point])
 
         super().update()

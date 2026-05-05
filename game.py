@@ -33,8 +33,11 @@ piece_types = set(piece_bag)
 class Game:
     def __init__(self):
         self.board = {index: False for index in indices()}
-        self.hand = random.choices(piece_bag, k=3)
+        self.hand_size = 3
+        self.hand = random.choices(piece_bag, k=self.hand_size)
 
     def randomize_board(self):
-        for index in self.board:
-            self.board[index] = random.choice([True, False])
+        self.board = {index: random.choice([True, False]) for index in indices()}
+
+    def randomize_hand(self):
+        self.hand = random.choices(piece_bag, k=self.hand_size)
