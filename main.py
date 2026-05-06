@@ -7,5 +7,4 @@ if __name__ == "__main__":
     app = HexGridTk(game, coordinates_on=False, strategy=strategies.HexCounter())
     app.update()
     while True:
-        # game.randomize_board()
         app.update()
