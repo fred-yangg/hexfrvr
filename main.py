@@ -4,7 +4,13 @@ from game import Game
 
 if __name__ == "__main__":
     game = Game()
-    app = HexGridTk(game, coordinates_on=True, strategy=strategies.EmptinessMaximization())
-    app.update()
+    app = HexGridTk(
+        game,
+        coordinates_on=False,
+        # strategy=strategies.Random(),
+        # strategy=strategies.HexCounter(),
+        strategy=strategies.EmptinessMaximizationWithDotBias(),
+    )
+
     while True:
         app.update()
