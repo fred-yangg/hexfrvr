@@ -4,7 +4,7 @@ from game import Game
 
 if __name__ == "__main__":
     game = Game()
-    app = HexGridTk(game, coordinates_on=True, strategy=strategies.HexCounter())
+    app = HexGridTk(game, coordinates_on=False, strategy=strategies.HexCounter())
     app.update()
     while True:
         # game.randomize_board()

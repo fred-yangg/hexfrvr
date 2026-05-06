@@ -43,6 +43,9 @@ class HexGridTk(tk.Tk):
 
         self.bg_colour = '#4e4e6e'
         self.empty_colour = '#333333'
+        self.cleared_colour = '#555555'
+        self.placed_cleared_colour = '#556655'
+        self.placed_colour = '#aaffaa'
         self.full_colour = '#ffffff'
         self.text_colour = '#7e7e9e'
         self.error_colour = '#ff0000'
@@ -55,8 +58,8 @@ class HexGridTk(tk.Tk):
 
         # Button to demonstrate fast color updates
         buttons = [
-            tk.Button(self, text="Reset", command=self.game.reset),
-            tk.Button(self, text=f'Play Strategy "{self.strategy.name}"', command=lambda: self.game.play_strategy(self.strategy)),
+            tk.Button(self, text="Reset", command=self.reset_game),
+            tk.Button(self, text=f'Play Strategy "{self.strategy.name}"', command=self.make_play),
             tk.Button(self, text=f'Play Continuously', command=self.start_continuous_play),
         ]
 
@@ -65,13 +68,63 @@ class HexGridTk(tk.Tk):
 
         self.dead_text = self.canvas.create_text(self.dim.center_x, self.dim.major_radius, text="", fill=self.error_colour, font=("Arial", 20, "bold"))
 
+    def rerender(self):
+        for index, filled in self.game.board.items():
+            colour = self.full_colour if filled else self.empty_colour
+            self.set_hex(index, colour)
+
+        for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
+            hex_points = self.piece_hex_points(piece_num, piece)
+            for hex_num, points in zip(piece_hexes, hex_points):
+                self.canvas.coords(hex_num, *[coord for point in points for coord in point])
+
+    def reset_game(self):
+        self.game.reset()
+        self.rerender()
+
+    def make_play(self):
+        prev_board = self.game.board.copy()
+        move_played = self.game.play_strategy(self.strategy)
+
+        # no move
+        if not move_played:
+            return
+
+        # update hex grid
+        for index in indices():
+            prev_state = prev_board[index]
+            curr_state = self.game.board[index]
+
+            if curr_state == prev_state:
+                if not curr_state:
+                    self.set_hex(index, self.empty_colour)
+                else:
+                    self.set_hex(index, self.full_colour)
+            elif not curr_state:
+                self.set_hex(index, self.cleared_colour)
+
+        # update specific play made
+        for index in move_played:
+            curr_state = self.game.board[index]
+
+            if curr_state:
+                self.set_hex(index, self.placed_colour)
+            else:
+                self.set_hex(index, self.placed_cleared_colour)
+
+        # update hand
+        for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
+            hex_points = self.piece_hex_points(piece_num, piece)
+            for hex_num, points in zip(piece_hexes, hex_points):
+                self.canvas.coords(hex_num, *[coord for point in points for coord in point])
+
+
     def start_continuous_play(self):
         self.continuous_play = True
 
-    def set_hex(self, index, filled: bool):
+    def set_hex(self, index, colour):
         hex_id = self.grid_hexes[index]
-        color = self.full_colour if filled else self.empty_colour
-        self.canvas.itemconfig(hex_id, fill=color)
+        self.canvas.itemconfig(hex_id, fill=colour)
 
     def hex_points(self, cx, cy) -> list[tuple[int, int]]:
         return [(
@@ -130,21 +183,13 @@ class HexGridTk(tk.Tk):
 
 
     def update(self):
-        for index, filled in self.game.board.items():
-            self.set_hex(index, filled)
-
-        for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
-            hex_points = self.piece_hex_points(piece_num, piece)
-            for hex_num, points in zip(piece_hexes, hex_points):
-                self.canvas.coords(hex_num, *[coord for point in points for coord in point])
-
         if self.game.dead:
             self.canvas.itemconfig(self.dead_text, text=f"No possible moves after {self.game.move_count} moves!")
         else:
             self.canvas.itemconfig(self.dead_text, text=f"")
 
         if self.continuous_play:
-            self.game.play_strategy(self.strategy)
+            self.make_play()
             if self.game.dead:
                 self.continuous_play = False
 

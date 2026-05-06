@@ -83,14 +83,16 @@ class Game:
 
         if not all_moves:
             self.dead = True
-            return
+            return None
 
         if len(all_moves) == 1:
-            self.play_hand(*all_moves[0])
-            return
+            move = all_moves[0]
+        else:
+            move = strategy.get_move(self, all_moves)
 
-        move = strategy.get_move(self, all_moves)
+        move_hexes = piece_hexes(self.hand[move[0]], move[1])
         self.play_hand(*move)
+        return move_hexes
 
     def clear(self, hexes):
         for hexagon in hexes:
