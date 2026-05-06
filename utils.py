@@ -5,10 +5,13 @@ def indices():
         for col in range(start, end):
             yield row, col
 
+def tadd(t1, t2):
+    return t1[0] + t2[0], t1[1] + t2[1]
+
 def piece_hexes(piece, position):
     pos_row, pos_col = position
-    for row, col in piece:
-        yield pos_row + row, pos_col + col
+    for hexagon in piece:
+        yield tadd(hexagon, position)
 
 def build_piece_checks(piece_types):
     piece_checks = {}

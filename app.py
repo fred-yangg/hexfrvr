@@ -58,9 +58,9 @@ class HexGridTk(tk.Tk):
 
         # Button to demonstrate fast color updates
         buttons = [
-            tk.Button(self, text="Reset", command=self.reset_game),
             tk.Button(self, text=f'Play Strategy "{self.strategy.name}"', command=self.make_play),
             tk.Button(self, text=f'Play Continuously', command=self.start_continuous_play),
+            tk.Button(self, text="Reset", command=self.reset_game),
         ]
 
         for i, button in enumerate(buttons):
