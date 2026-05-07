@@ -3,24 +3,16 @@ import random
 from utils import tadd
 
 
-class EmptinessMaximizationWithDotBias:
-    name = 'Emptiness Maximization w/ Dot Bias'
+class MoveMaximization:
+    name = 'Move Maximization'
 
     def get_move(self, game, all_moves):
         checks = [(1,0), (0,1), (1,1)]
-        dot = ((0,0),(0,0),(0,0),(0,0))
         def rank_move(move):
-            piece, position = move
-
-            if piece == dot:
-                dot_bias = -100000
-            else:
-                dot_bias = 0
-
             lookahead = game.copy()
             lookahead.play_hand(*move)
 
-            score = dot_bias
+            score = 0
             for index, filled in lookahead.board.items():
                 if not filled:
                     for check in checks:

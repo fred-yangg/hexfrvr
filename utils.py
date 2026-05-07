@@ -9,12 +9,11 @@ def tadd(t1, t2):
     return t1[0] + t2[0], t1[1] + t2[1]
 
 def piece_hexes(piece, position):
-    pos_row, pos_col = position
     for hexagon in piece:
         yield tadd(hexagon, position)
 
-def build_piece_checks(piece_types):
-    piece_checks = {}
+def build_line_checks_by_move(piece_types):
+    line_checks_by_move = {}
 
     for piece in piece_types:
         for position in indices():
@@ -43,6 +42,24 @@ def build_piece_checks(piece_types):
                 size = 9 - diag_mag
                 checks.append({(start[0] + i, start[1] + i) for i in range(size)})
 
-            piece_checks[(piece, position)] = checks
+            line_checks_by_move[(piece, position)] = checks
 
-    return piece_checks
+    return line_checks_by_move
+
+def build_in_bounds_moves_by_piece(piece_types):
+    positions = set(indices())
+    in_bounds_moves_by_piece = {piece: set() for piece in piece_types}
+
+    for piece in piece_types:
+        for position in positions:
+            valid = True
+
+            for hexagon in piece_hexes(piece, position):
+                if hexagon not in positions:
+                    valid = False
+                    break
+
+            if valid:
+                in_bounds_moves_by_piece[piece].add(position)
+
+    return in_bounds_moves_by_piece
