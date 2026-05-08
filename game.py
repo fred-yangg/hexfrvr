@@ -58,7 +58,6 @@ line_checks_by_move = build_line_checks_by_move(piece_types)
 
 in_bounds_moves_by_piece = build_in_bounds_moves_by_piece(piece_types)
 
-
 class Game:
     def __init__(self):
         self.hand_size = 3

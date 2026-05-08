@@ -9,7 +9,8 @@ if __name__ == "__main__":
         coordinates_on=False,
         # strategy=strategies.Random(),
         # strategy=strategies.HexCounter(),
-        strategy=strategies.EmptinessMaximizationWithDotBias(),
+        # strategy=strategies.EmptinessMaximizationWithDotBias(),
+        strategy=strategies.MoveMaximization(),
     )
 
     while True:

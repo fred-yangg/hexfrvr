@@ -1,3 +1,6 @@
+from collections import defaultdict
+
+
 def indices():
     for row in range(9):
         start = max(0, row - 4)
@@ -63,3 +66,14 @@ def build_in_bounds_moves_by_piece(piece_types):
                 in_bounds_moves_by_piece[piece].add(position)
 
     return in_bounds_moves_by_piece
+
+def build_probabilities_by_piece(piece_bag):
+    n = len(piece_bag)
+    counts = defaultdict(int)
+    for piece in piece_bag:
+        counts[piece] += 1
+
+    return {
+        piece: count / n
+        for piece, count in counts.items()
+    }
