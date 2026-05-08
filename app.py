@@ -73,10 +73,14 @@ class HexGridTk(tk.Tk):
             colour = self.full_colour if filled else self.empty_colour
             self.set_hex(index, colour)
 
+        self.rerender_hand()
+
+    def rerender_hand(self):
         for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
             hex_points = self.piece_hex_points(piece_num, piece)
             for hex_num, points in zip(piece_hexes, hex_points):
                 self.canvas.coords(hex_num, *[coord for point in points for coord in point])
+
 
     def reset_game(self):
         self.game.reset()
@@ -113,10 +117,7 @@ class HexGridTk(tk.Tk):
                 self.set_hex(index, self.placed_cleared_colour)
 
         # update hand
-        for piece_num, (piece, piece_hexes) in enumerate(zip(self.game.hand, self.hand_hexes)):
-            hex_points = self.piece_hex_points(piece_num, piece)
-            for hex_num, points in zip(piece_hexes, hex_points):
-                self.canvas.coords(hex_num, *[coord for point in points for coord in point])
+        self.rerender_hand()
 
 
     def start_continuous_play(self):
@@ -152,6 +153,9 @@ class HexGridTk(tk.Tk):
             cx += offset_x
             cy += offset_y
             hex_points.append(self.hex_points(cx, cy))
+
+        while len(hex_points) < 4:
+            hex_points.append(hex_points[0])
 
         return hex_points
 
