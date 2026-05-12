@@ -83,6 +83,7 @@ class HexGridTk(tk.Tk):
 
 
     def reset_game(self):
+        self.continuous_play = False
         self.game.reset()
         self.rerender()
 

@@ -2,7 +2,10 @@ import random
 
 from utils import indices, piece_hexes, build_line_checks_by_move, build_in_bounds_moves_by_piece
 
-piece_bag = [
+type Position = tuple[int, int]
+type Piece = tuple[Position, ...]
+type Move = tuple[Piece, Position]
+piece_bag: list[Piece] = [
     # lines
     ((0,0), (1,0), (2,0), (3,0)), # /
     ((0,0), (1,0), (2,0), (3,0)), # /
@@ -52,11 +55,11 @@ piece_bag = [
     ((0,0), (1,0), (1,1), (1,-1)),  # L face up
 ]
 
-piece_types = set(piece_bag)
+piece_types: set[Piece] = set(piece_bag)
 
-line_checks_by_move = build_line_checks_by_move(piece_types)
+line_checks_by_move: dict[Move, list[set[Position]]] = build_line_checks_by_move(piece_types)
 
-in_bounds_moves_by_piece = build_in_bounds_moves_by_piece(piece_types)
+in_bounds_moves_by_piece: dict[Piece, set[Position]] = build_in_bounds_moves_by_piece(piece_types)
 
 class Game:
     def __init__(self):
@@ -104,13 +107,6 @@ class Game:
         for hexagon in hexes:
             self.board[hexagon] = True
 
-    def check_move_in_bounds_no_collision(self, piece, position):
-        for hexagon in piece_hexes(piece, position):
-            if hexagon not in self.board or self.board[hexagon]:
-                return False
-
-        return True
-
     def check_move_collision(self, piece, position):
         for hexagon in piece_hexes(piece, position):
             if self.board[hexagon]:
@@ -118,22 +114,26 @@ class Game:
 
         return True
 
-    def all_playable_moves(self):
+    def all_playable_moves(self) -> list[Move]:
         return [
             (piece, position)
-            for piece, positions in in_bounds_moves_by_piece.items()
-            if piece in self.hand
-            for position in positions
+            for piece in set(self.hand)
+            for position in in_bounds_moves_by_piece[piece]
             if self.check_move_collision(piece, position)
         ]
 
     def place_piece(self, piece, position):
         self.fill(piece_hexes(piece, position))
 
-    def play_hand(self, piece, position):
-        piece_num = self.hand.index(piece)
+    def play_hand(self, piece, position, replacement=True):
         self.place_piece(piece, position)
-        self.hand[piece_num] = random.choice(piece_bag)
+
+        if replacement:
+            piece_num = self.hand.index(piece)
+            self.hand[piece_num] = random.choice(piece_bag)
+        else:
+            self.hand.remove(piece)
+
         self.perform_line_clears(piece, position)
         self.move_count += 1
 

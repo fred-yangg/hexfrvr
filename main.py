@@ -10,7 +10,8 @@ if __name__ == "__main__":
         # strategy=strategies.Random(),
         # strategy=strategies.HexCounter(),
         # strategy=strategies.EmptinessMaximizationWithDotBias(),
-        strategy=strategies.MoveMaximization(),
+        # strategy=strategies.MoveMaximization(),
+        strategy=strategies.LookaheadEmptinessMaximization(lookahead_depth=2),
     )
 
     while True:
