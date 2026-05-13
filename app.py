@@ -67,6 +67,7 @@ class HexGridTk(tk.Tk):
             button.place(x=20, y=20 + 40*i)
 
         self.dead_text = self.canvas.create_text(self.dim.center_x, self.dim.major_radius, text="", fill=self.error_colour, font=("Arial", 20, "bold"))
+        self.move_text = self.canvas.create_text(700, 20, text=f"Moves: 0", fill=self.full_colour, font=("Arial", 12, "bold"))
 
     def rerender(self):
         for index, filled in self.game.board.items():
@@ -116,6 +117,8 @@ class HexGridTk(tk.Tk):
                 self.set_hex(index, self.placed_colour)
             else:
                 self.set_hex(index, self.placed_cleared_colour)
+
+        self.canvas.itemconfig(self.move_text, text=f"Moves: {self.game.move_count}")
 
         # update hand
         self.rerender_hand()
